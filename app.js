@@ -66,17 +66,20 @@ server.get('/', (req, res) => {
 server.get('/mypage',(req,res) => {
   db.query('SELECT * FROM register WHERE id=?',[req.session.userid],function(err,register){
     let match_status = register[0].match_status
+    let match_user = register[0].match_userid
+    console.log(match_user)
     if(match_status){
-      db.query('SELECT * FROM submituser WHERE user_id=?',[req.session.userid],function(err2,result){
-        let match_user = result[0].match_user
-        return res.render('mypage',{'match_status':match_status,'match_user':match_user})
+      db.query('SELECT * FROM register WHERE id=?',[match_user],function(err2,register2){
+        let match_sex = register2[0].sex
+        let match_age = register2[0].age
+        let match_place = '이건 어카지 ?'
+        return res.render('mypage',{'match_status':match_status,'match_user':match_user,'match_sex':match_sex,'match_age':match_age,'match_place':match_place})
       })
     }else{
-      return res.render('mypage',{'match_status':'매칭 중','match_user':''})
+      return res.render('mypage',{'match_status':'매칭 중','match_user':'','match_sex':'','match_age':'','match_place':''})
     }
   })
 })
-
 
 
 
