@@ -37,6 +37,16 @@ user_selectmatch TEXT NULL,
 user_selectsex TEXT NULL,
 PRIMARY KEY(user_id)
 );
+
+3) 테이블 이름 : adminbro
+내용 : 
+CREATE TABLE adminbro(
+num INT(3) NOT NULL AUTO_INCREMENT,
+matching TEXT NULL,
+matching_sex TEXT NULL,
+campus TEXT NULL,
+PRIMARY KEY(num)
+);
 ---------------------------------------------
 
 ---------------------------------------------

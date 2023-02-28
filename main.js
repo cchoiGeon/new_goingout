@@ -67,7 +67,6 @@ server.get('/mypage',(req,res) => {
   db.query('SELECT * FROM register WHERE id=?',[req.session.userid],function(err,register){
     let match_status = register[0].match_status
     let match_user = register[0].match_userid
-    console.log(match_user)
     if(match_status){
       db.query('SELECT * FROM register WHERE id=?',[match_user],function(err2,register2){
         let match_sex = register2[0].sex
@@ -78,16 +77,150 @@ server.get('/mypage',(req,res) => {
     }else{
       return res.render('mypage',{'match_status':'매칭 중','match_user':'','match_sex':'','match_age':'','match_place':''})
     }
+  });
+});
+
+server.get('/Adminbro',(req,res) => {
+  db.query('SELECT * FROM register WHERE id=?',[req.session.userid],function(err,register){
+    let admin = register[0].id
+    if(admin === 0){
+      return res.render('Adminbro');
+    }else{
+      return res.redirect('/')
+    }
   })
 })
 
+server.post('/Adminbro_process',(req,res) => {
+  let post = req.body;
+  let matching = post.matching;
+  let matching_sex = post.matching_sex;
+  let campus = post.campus;
+  db.query('SELECT * FROM adminbro',function(err,result){
+    if(result[0]){
+      db.query('UPDATE adminbro SET matching=?,matching_sex=?,campus=?',[matching,matching_sex,campus],function(err2,result2){
+        return res.redirect('/Adminbro_search');
+      })
+    }else{
+      db.query('INSERT INTO adminbro(matching,matching_sex,campus)VALUES(?,?,?)',[matching,matching_sex,campus],function(err3,result3){
+        return res.redirect('/Adminbro_search')
+      })
+    }
+  });
+});
 
+server.get('/Adminbro_search',(req,res) => {
+  db.query('SELECT * FROM register WHERE id=?',[req.session.userid],function(err,register){
+    let admin = register[0].id
+    if(admin === 0){
+      let table = `<table>`
+      db.query('SELECT * FROM adminbro',function(err,adminbro){
+        let matching = adminbro[0].matching
+        let matching_sex = adminbro[0].matching_sex
+        let campus = adminbro[0].campus
+        if(matching === 'all' && matching_sex === 'all'){
+          db.query('SELECT * FROM submituser WHERE user_campus=?',[campus],function(err,submituser){
+            for(let i=0; i<submituser.length; i++){  
+              table += `
+              <tr>
+                <td> <input class="form-check-input" type="checkbox" name="match" value="${submituser[i].user_id}" id="flexCheckDefault"> </td>
+                <td>사용자가 선택한 매칭 : ${submituser[i].user_selectmatch}</td>
+                <td>사용자가 선택한 상대방 성별 : ${submituser[i].user_selectsex}</td>
+                <td>사용자 아이디 : ${submituser[i].user_id}</td>
+                <td>사용자 성별 : ${submituser[i].user_sex}</td>
+                <td>사용자 학교 : ${submituser[i].user_campus}</td>
+                <td>사용자 나이 : ${submituser[i].user_age}</td>
+                <td>사용자 연락처 : ${submituser[i].user_selectcontact+' : '+submituser[i].user_contact}</td>
+              </tr>
+              `
+            }
+            table+=`
+              <tr>
+                <td colspan="4"><button type="submit">매칭</button></td>
+              </tr>
+            </table>`
+            return res.render('Adminbro_search',{'table':table});
+          });
+        }else if(matching === 'all'){
+          db.query('SELECT * FROM submituser WHERE user_selectsex=?&&user_campus=?',[matching_sex,campus],function(err,submituser){
+            for(let i=0; i<submituser.length; i++){  
+              table += `
+              <tr>
+                <td> <input class="form-check-input" type="checkbox" name="match" value="${submituser[i].user_selectmatch}" id="flexCheckDefault"> </td>
+                <td>사용자가 선택한 매칭 : ${submituser[i].user_selectmatch}</td>
+                <td>사용자가 선택한 상대방 성별 : ${submituser[i].user_selectsex}</td>
+                <td>사용자 아이디 : ${submituser[i].user_id}</td>
+                <td>사용자 성별 : ${submituser[i].user_sex}</td>
+                <td>사용자 학교 : ${submituser[i].user_campus}</td>
+                <td>사용자 나이 : ${submituser[i].user_age}</td>
+                <td>사용자 연락처 : ${submituser[i].user_selectcontact+' : '+submituser[i].user_contact}</td>
+              </tr>
+              `
+            }
+            table+=`</table>`
+            return res.render('Adminbro_search',{'table':table});
+          });
+        }else if(matching_sex === 'all'){
+          db.query('SELECT * FROM submituser WHERE user_selectmatch=?&&user_campus=?',[matching,campus],function(err,submituser){
+            for(let i=0; i<submituser.length; i++){  
+              table += `
+              <tr>
+                <td> <input class="form-check-input" type="checkbox" name="match" value="${submituser[i].user_selectmatch}" id="flexCheckDefault"> </td>
+                <td>사용자가 선택한 매칭 : ${submituser[i].user_selectmatch}</td>
+                <td>사용자가 선택한 상대방 성별 : ${submituser[i].user_selectsex}</td>
+                <td>사용자 아이디 : ${submituser[i].user_id}</td>
+                <td>사용자 성별 : ${submituser[i].user_sex}</td>
+                <td>사용자 학교 : ${submituser[i].user_campus}</td>
+                <td>사용자 나이 : ${submituser[i].user_age}</td>
+                <td>사용자 연락처 : ${submituser[i].user_selectcontact+' : '+submituser[i].user_contact}</td>
+              </tr>
+              `
+            }
+            table+=`</table>`
+            return res.render('Adminbro_search',{'table':table});
+          });
+        }else{
+          console.log('1')
+          db.query('SELECT * FROM submituser WHERE user_selectsex=?&&user_selectmatch=?&&user_campus=?',[matching_sex,matching,campus],function(err,submituser){
+            for(let i=0; i<submituser.length; i++){  
+              table += `
+              <tr>
+                <td> <input class="form-check-input" type="checkbox" name="match" value="${submituser[i].user_selectmatch}" id="flexCheckDefault"> </td>
+                <td>사용자가 선택한 매칭 : ${submituser[i].user_selectmatch}</td>
+                <td>사용자가 선택한 상대방 성별 : ${submituser[i].user_selectsex}</td>
+                <td>사용자 아이디 : ${submituser[i].user_id}</td>
+                <td>사용자 성별 : ${submituser[i].user_sex}</td>
+                <td>사용자 학교 : ${submituser[i].user_campus}</td>
+                <td>사용자 나이 : ${submituser[i].user_age}</td>
+                <td>사용자 연락처 : ${submituser[i].user_selectcontact+' : '+submituser[i].user_contact}</td>
+              </tr>
+              `
+            }
+            table+=`</table>`
+            return res.render('Adminbro_search',{'table':table});
+          });
+        }
+       })
+    }else{
+      return res.redirect('/');
+    }
+  })
+})
 
-
-
-
-
-
+server.post('/Adminbro_match_process',(req,res) => {
+  let post = req.body;
+  let match1 = parseInt(post.match[0])
+  let match2 = parseInt(post.match[1])
+  db.query('UPDATE register SET match_status=?,match_userid=? WHERE id=?',[match1,'true',match2],function(err,result){
+    db.query('UPDATE register SET match_status=?,match_userid=? WHERE id=?',[match2,'true',match1],function(err,result){
+      db.query('DELETE FROM submituser WHERE user_id=?',[match1],function(err,result){
+        db.query('DELETE FROM submituser WHERE user_id=?',[match2],function(err,result){
+          return res.redirect('/Adminbro');
+        })
+      })
+    })
+  })
+})
 
 //회원가입 기능
 server.get('/register', (req, res) => {
