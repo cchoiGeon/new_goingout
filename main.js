@@ -38,7 +38,7 @@ server.set('views', './views');
 
 //use 메서드
 server.use(express.static('assets'));
-
+server.use(express.static('uploads'));
 server.use(bodyParser.urlencoded({ extended: false}));
 server.use(session({
   secret: 'q1321weff@45%$',
@@ -123,7 +123,7 @@ server.get('/Adminbro_search',(req,res) => {
             for(let i=0; i<submituser.length; i++){  
               table += `
               <tr>
-                <td> <input class="form-check-input" type="checkbox" name="match" value="${submituser[i].user_id}" id="flexCheckDefault"> </td>
+                <td> <input class="form-check-input" type="checkbox" name="match" value="${submituser[i].user_id}" id="flexCheckDefault"></td>
                 <td>사용자가 선택한 매칭 : ${submituser[i].user_selectmatch}</td>
                 <td>사용자가 선택한 상대방 성별 : ${submituser[i].user_selectsex}</td>
                 <td>사용자 아이디 : ${submituser[i].user_id}</td>
@@ -131,14 +131,11 @@ server.get('/Adminbro_search',(req,res) => {
                 <td>사용자 학교 : ${submituser[i].user_campus}</td>
                 <td>사용자 나이 : ${submituser[i].user_age}</td>
                 <td>사용자 연락처 : ${submituser[i].user_selectcontact+' : '+submituser[i].user_contact}</td>
+                <td>사용자 학생증 찾아보기 : <a href="Adminbro_search/${submituser[i].user_id}/card">찾기</a></td>
               </tr>
               `
             }
-            table+=`
-              <tr>
-                <td colspan="4"><button type="submit">매칭</button></td>
-              </tr>
-            </table>`
+            table+=`</table>`
             return res.render('Adminbro_search',{'table':table});
           });
         }else if(matching === 'all'){
@@ -206,7 +203,13 @@ server.get('/Adminbro_search',(req,res) => {
     }
   })
 })
-
+server.get('/Adminbro_search/:id/card',(req,res) => {
+  let user_id = parseInt(path.parse(req.params.id).base);
+  db.query('SELECT * FROM register WHERE id=?',[user_id],function(err,register){
+    let img_root = register[0].student_card_root;
+    res.render('Adminbro_img',{'img_root':img_root})
+  })
+})
 server.post('/Adminbro_match_process',(req,res) => {
   let post = req.body;
   let match1 = parseInt(post.match[0])
