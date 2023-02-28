@@ -84,10 +84,10 @@ server.get('/Adminbro',(req,res) => {
   db.query('SELECT * FROM register WHERE id=?',[req.session.userid],function(err,register){
     let admin = register[0].id
     if(admin === 0){
-      db.query('SELECT * FROM register',function(err,register2){
+      db.query('SELECT * FROM submituser',function(err,submituser){ // 이거 submituser로 바꾸기 register로 하면 계속 남아있음 
         let list = []
-        for(let i=1; i<register2.length; i++){
-          list.push(register2[i].campus)
+        for(let i=0; i<submituser.length; i++){
+          list.push(submituser[i].user_campus)
         }
         let set = new Set(list)
         let newlist = [...set]
@@ -230,8 +230,8 @@ server.post('/Adminbro_match_process',(req,res) => {
   let post = req.body;
   let match1 = parseInt(post.match[0])
   let match2 = parseInt(post.match[1])
-  db.query('UPDATE register SET match_status=?,match_userid=? WHERE id=?',[match1,'true',match2],function(err,result){
-    db.query('UPDATE register SET match_status=?,match_userid=? WHERE id=?',[match2,'true',match1],function(err,result){
+  db.query('UPDATE register SET match_status=?,match_userid=? WHERE id=?',['true',match1,match2],function(err,result){
+    db.query('UPDATE register SET match_status=?,match_userid=? WHERE id=?',['true',match2,match1],function(err,result){
       db.query('DELETE FROM submituser WHERE user_id=?',[match1],function(err,result){
         db.query('DELETE FROM submituser WHERE user_id=?',[match2],function(err,result){
           return res.redirect('/Adminbro');
