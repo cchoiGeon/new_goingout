@@ -84,7 +84,23 @@ server.get('/Adminbro',(req,res) => {
   db.query('SELECT * FROM register WHERE id=?',[req.session.userid],function(err,register){
     let admin = register[0].id
     if(admin === 0){
-      return res.render('Adminbro');
+      db.query('SELECT * FROM register',function(err,register2){
+        let list = []
+        for(let i=1; i<register2.length; i++){
+          list.push(register2[i].campus)
+        }
+        let set = new Set(list)
+        let newlist = [...set]
+        let table = `<table> <tr><td>매칭 대기 학교</td></tr>`
+        for(let i=0; i<newlist.length; i++){
+          table += `
+          <tr>
+            <td>${newlist[i]}</td>
+          </tr>`
+        }
+        table += `</table>`
+        return res.render('Adminbro',{'table':table});
+      })
     }else{
       return res.redirect('/')
     }
