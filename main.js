@@ -55,10 +55,68 @@ server.get('/', (req, res) => {
     <li><a class="nav-link scrollto" href="/mypage">mypage</a></li></li>
     <li><a class="nav-link scrollto" href="/logout_process">logout</a></li></li>
     `
-    return res.render('index',{'logintrue':logintrue})
+    db.query('SELECT * FROM submituser',function(err,submituser){ // 이거 submituser로 바꾸기 register로 하면 계속 남아있음 
+      db.query('SELECT * FROM register WHERE id=?',[req.session.userid],function(err,register){
+        let list = []
+        for(let i=0; i<submituser.length; i++){
+          list.push(submituser[i].user_campus)
+        }
+        let set = new Set(list)
+        let newlist = [...set]
+        let table = `<table>`
+        for(let i=0; i<newlist.length; i++){
+          table += `
+          <tr>
+            <td>${newlist[i]}</td>
+          </tr>`
+        }
+        table += `</table>`
+        let user_campus = register[0].campus
+        let mancount = 0;
+        let womancount = 0;
+        let completematch = 0;
+        db.query('SELECT * FROM submituser WHERE user_campus=?',[user_campus],function(err,result){
+          for(let i=0; i<result.length; i++){
+            if(result[i].user_sex === 'man'){
+              mancount+=1;
+            }else{
+              womancount+=1;
+            }
+          }
+          db.query('SELECT * FROM register WHERE campus=?',[user_campus],function(err,result2){
+            for(let i=0; i<result2.length; i++){
+              console.log(result2[i].match_status)
+              if(result2[i].match_status === 'true'){
+                completematch+=1;
+                console.log(completematch)
+              }
+            }
+            return res.render('index',{'logintrue':logintrue,'table':table,'user_campus':user_campus,"womancount":womancount,'mancount':mancount,'completematch':completematch})
+          })
+        })
+      })
+    })
+  }else{
+    let logintrue = `<li><a class="getstarted scrollto" href="/login">Get Started</a></li>`
+    db.query('SELECT * FROM submituser',function(err,submituser){ // 이거 submituser로 바꾸기 register로 하면 계속 남아있음 
+      let list = []
+      for(let i=0; i<submituser.length; i++){
+        list.push(submituser[i].user_campus)
+      }
+      let set = new Set(list)
+      let newlist = [...set]
+      let table = `<table>`
+      let completematch = 0;
+      for(let i=0; i<newlist.length; i++){
+        table += `
+        <tr>
+          <td>${newlist[i]}</td>
+        </tr>`
+      }
+      table += `</table>`
+      return res.render('index',{'logintrue':logintrue,'table':table,'user_campus':'','womancount':'','mancount':'','completematch':completematch})
+    })
   }
-  let logintrue = `<li><a class="getstarted scrollto" href="/login">Get Started</a></li>`
-  return res.render('index',{'logintrue':logintrue})
 });
 
 
@@ -250,14 +308,12 @@ server.post("/register_process",(req,res) =>{
   let contact = post.selectcontact;
   let sex = post.sex
   if(contact === "NULL" || sex === "NULL"){
-    res.write("<script>alert('Please check contact or sex.')</script>");
-    return res.write("<script>window.location='/register'</script>");
+    return res.write(`<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><script>alert('연락처 또는 성별을 확인해주세요'); window.location='/register'</script></html>`)
   }
   db.query('SELECT * FROM register',function(err2,result){
     for(let i = 0; i < result.length; i++){
       if(result[i].id == post.id){
-        res.write("<script>alert('This ID is already in use.')</script>");
-        return res.write("<script>window.location='/register'</script>");;
+        return res.write(`<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><script>alert('이미 사용 중인 아이디입니다'); window.location='/register'</script></html>`)
       }
     }
     if(9<post.id.length<=10 && post.password.length>10){
@@ -270,8 +326,7 @@ server.post("/register_process",(req,res) =>{
           });
       });
     }else{
-      res.write("<script>alert('Please check id length or password length')</script>");
-      return res.write("<script>window.location='/register'</script>");;
+      return res.write(`<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><script>alert('아이디와 비밀번호 길이를 확인해주세요'); window.location='/register'</script></html>`)
     }
   });
 });
@@ -323,9 +378,8 @@ for(let alph in alphlist){
 server.post("/register2_process",(req,res)=>{
   let post = req.body;
   let selectcampus = post.selectcampus;
-  if(selectcampus ==='err'|| selectcampus === undefined){
-    res.write(`<script>alert('plase check campus')</script>`);
-    return res.write("<script>window.location='/register2'</script>");
+  if(post.selectcampus === undefined){
+    return res.write(`<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><script>alert('학교 선택을 다시 해주세요'); window.location='/register4'</script></html>`)
   }
   db.query("UPDATE register SET campus=? WHERE id=?",[selectcampus,req.session.registerId],function(err,result){ // register table에 유저 학교 업데이트해줌
     return res.redirect("/register3");
@@ -341,11 +395,9 @@ server.get('/register3', (req, res) => {
 })
 server.post('/register3_process',upload.single('card'),(req,res) => {
   if(!req.file){
-    res.write(`<script>alert('plase upload student card')</script>`);
-    return res.write("<script>window.location='/register3'</script>");
+    return res.write(`<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><script>alert('학생증을 업로드 해주세요'); window.location='/register3'</script></html>`)
   }
   db.query('UPDATE register SET student_card_root=? WHERE id=?',[req.file.filename,req.session.registerId],function(err,result){ // register table에 유저 학생증 업데이트해줌
-    console.log(req.file.filename,req.session.registerId)
     return res.redirect('/register4');
   })
 });
@@ -358,20 +410,15 @@ server.get('/register4', (req, res) => {
 })
 server.post("/register4_process",(req,res)=>{
   let post = req.body;
-  let selectmatch = post.selectmatch;
-  let selectsex = post.selectsex;
-  let close = post.close;
-  let ok = post.ok;
-  if(close){
+  if(post.close){
     res.redirect('/register4');
     return false;
   }
-  if(selectmatch === '매칭 종류 정하기' || selectsex ==="상대방 성별 정하기"){
-    res.write("<script>alert('Please re-enter it.')</script>");
-    return res.write("<script>window.location='/register4'</script>");
+  if(post.selectmatch === '매칭 종류 정하기' || post.selectsex ==="상대방 성별 정하기"){
+    return res.write(`<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><script>alert('매칭 종류나 상대방 성별 입력을 확인해주세요'); window.location='/register4'</script></html>`)
   }
-  if(ok){
-    db.query('UPDATE register SET selectmatch=?,selectsex=? WHERE id=?',[selectmatch,selectsex,req.session.registerId],function(err2,result){
+  if(post.ok){
+    db.query('UPDATE register SET selectmatch=?,selectsex=? WHERE id=?',[post.selectmatch ,post.selectsex,req.session.registerId],function(err2,result){
       return res.redirect('/makematch')
     });
   }
@@ -385,8 +432,7 @@ server.get("/makematch",(req,res)=>{
           req.session.userid = register[i].id
           req.session.login = true;
           req.session.save(function(){
-            res.write("<script>alert('Submission complete!')</script>");
-            return res.write("<script>window.location='/mypage'</script>");
+            return res.write(`<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><script>alert('매칭 접수가 완료 되셨습니다'); window.location='/mypage'</script></html>`)
           });
           return false;
         });
@@ -411,20 +457,18 @@ server.post("/login/process",(req,res) =>{
         req.session.userid = result[i].id;
         req.session.login = true;
         req.session.save(function(){
-          res.write(`<script>alert('Hi ${result[i].id} !')</script>`);
-          return res.write("<script>window.location='/'</script>");
+          return res.write(`<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><script>alert('Hi ${userid}'); window.location='/'</script></html>`)
         });
         return false;
       }
     }
-    res.write("<script>alert('Please check id or password')</script>");
-    return res.write("<script>window.location='/login'</script>");;
+    return res.write(`<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><script>alert('아이디와 비밀번호를 다시 확인해주세요'); window.location='/login'</script></html>`)
   });
 });
 
 server.get("/logout_process",(req,res) => {
   req.session.destroy(function(err){
-    return res.redirect('/');
+    return res.write(`<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><script>alert('로그아웃이 완료 되셨습니다'); window.location='/register'</script></html>`)
   })
 });
 

@@ -53,12 +53,16 @@
                                                 <input class="form-control" id="inputage" name="age" type="text" required>
                                                 <label for="inputage">나이</label>
                                             </div>
+                                            <div class="form-floating mb-3">
+                                                <input class="form-control" type="text" name="cellPhone" id="cellPhone" maxlength="13" />
+                                                <label for="cellPhone">휴대폰 번호 </label>
+                                            </div>
                                             <div class="mt-4 mb-0">
                                                 <select class="form-select" name="selectcontact" aria-label="Default select example">
-                                                    <option selected value="NULL">연락 받으실 경로를 선택해주세요</option>
+                                                    <option selected value="NULL">인스타,카카오톡으로 연락 받기</option>
+                                                    <option>안함</option>
                                                     <option>카카오톡</option>
                                                     <option>인스타</option>
-                                                    <option>전화번호</option>
                                                 </select>
                                                 <input class="form-control" id="inputtherest" name="contact" type="text" required>
                                             </div>
@@ -91,21 +95,8 @@
                 </footer>
             </div>
         </div>
-        <script>
-            function search(){
-                let searchcampus = document.getElementById('searchcampus')
-                let card = document.getElementById('card');
-                if(searchcampus.style.display == 'block' && card.style.display){
-                    searchcampus.style.display = 'none';
-                    card.style.display = 'none';
-                }
-                else{
-                    searchcampus.style.display = 'block';
-                    card.style.display = 'block';
-                }
-            }
-        </script>
+        <script src="js/register.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-        <script src="scripts.js"></script>
+        <script src="js/scripts.js"></script>
     </body>
 </html>
